@@ -1,0 +1,4 @@
+include ':tnnlibrary'
+include ':ncnnlibrary'
+include ':app'
+rootProject.name = "NNBenchmark"
