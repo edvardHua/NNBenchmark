@@ -15,11 +15,11 @@ public class TNNInterpreter {
 
 	private Classifier mClassifier = new Classifier();
 
-	public TNNInterpreter(Context context){
-		this(context, false);
+	public TNNInterpreter(Context context) {
+		this(context, true, false);
 	}
 
-	public TNNInterpreter(Context context, boolean useGpu) {
+	public TNNInterpreter(Context context, boolean useGpu, boolean quantModel) {
 		String targetDir = context.getFilesDir().getAbsolutePath();
 		String[] modelPathsDetector = {
 				"Models/mobilenet_v2",
@@ -40,7 +40,12 @@ public class TNNInterpreter {
 		}
 
 		// 0 是 float 模型，1 是 int8 模型
-		int initCode = mClassifier.init(interModelFilePath[1], flag);
+		int initCode = 0;
+		if (quantModel) {
+			initCode = mClassifier.init(interModelFilePath[1], flag);
+		} else {
+			initCode = mClassifier.init(interModelFilePath[0], flag);
+		}
 
 		if (initCode != 0) {
 			throw new IllegalStateException("Init model failed.");

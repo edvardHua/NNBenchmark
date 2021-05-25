@@ -12,7 +12,7 @@ import android.graphics.Bitmap;
 public class NCNNINterpreter {
 
 	public native boolean Init(AssetManager mgr);
-	public native boolean ClassifierNcnn(Bitmap bitmap, boolean use_gpu);
+	public native boolean ClassifierNcnn(Bitmap bitmap, boolean use_gpu, boolean use_int8);
 
 	static {
 		try {

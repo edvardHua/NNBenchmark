@@ -19,6 +19,7 @@ static ncnn::UnlockedPoolAllocator g_blob_pool_allocator;
 static ncnn::PoolAllocator g_workspace_pool_allocator;
 
 static ncnn::Net mobilenet;
+static ncnn::Net mobilenet_int8;
 
 extern "C"
 JNIEXPORT jboolean JNICALL
@@ -31,17 +32,16 @@ Java_com_edvardzeng_ncnnlibrary_NCNNINterpreter_Init(JNIEnv *env, jobject thiz, 
     opt.workspace_allocator = &g_workspace_pool_allocator;
 
     // use vulkan compute
-//    if (ncnn::get_gpu_count() != 0)
-//        opt.use_vulkan_compute = true;
+    if (ncnn::get_gpu_count() != 0)
+        opt.use_vulkan_compute = true;
 
     AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
     // float model
-//    int ret4 = mobilenet.load_param(mgr, "mobilenet_v2_opt.param");
-//    int ret5 = mobilenet.load_model(mgr, "mobilenet_v2_opt.bin");
+    mobilenet.load_param(mgr, "mobilenet_v2_opt.param");
+    mobilenet.load_model(mgr, "mobilenet_v2_opt.bin");
 
-    // TODO: int8 model，会出错
-    int ret4 = mobilenet.load_param(mgr, "mobilenet_v2_int8.param");
-    int ret5 = mobilenet.load_model(mgr, "mobilenet_v2_int8.bin");
+    mobilenet_int8.load_param(mgr, "mobilenet_v2_int8.param");
+    mobilenet_int8.load_model(mgr, "mobilenet_v2_int8.bin");
 
     return JNI_TRUE;
 }
@@ -49,7 +49,7 @@ Java_com_edvardzeng_ncnnlibrary_NCNNINterpreter_Init(JNIEnv *env, jobject thiz, 
 extern "C"
 JNIEXPORT jboolean JNICALL
 Java_com_edvardzeng_ncnnlibrary_NCNNINterpreter_ClassifierNcnn(JNIEnv *env, jobject thiz,
-                                                               jobject bitmap, jboolean use_gpu) {
+                                                               jobject bitmap, jboolean use_gpu, jboolean use_int8) {
     // TODO: implement MobilenetNcnn()
 
     double start_time = ncnn::get_current_time();
@@ -70,8 +70,16 @@ Java_com_edvardzeng_ncnnlibrary_NCNNINterpreter_ClassifierNcnn(JNIEnv *env, jobj
     ncnn::Mat out2;
     {
         ncnn::Extractor ex = mobilenet.create_extractor();
+        if (use_int8){
+            ex = mobilenet_int8.create_extractor();
+        }
 
-//        ex.set_vulkan_compute(false);
+        if(use_gpu){
+            ex.set_vulkan_compute(true);
+        }else{
+            ex.set_num_threads(4);
+            ex.set_vulkan_compute(false);
+        }
 
         ex.input("data", inS);
         ex.extract("prob", out2);
